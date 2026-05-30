@@ -77,7 +77,7 @@ def login():
         @app.route("/")
 def home():
     if "user" in session:
-    return render_template("home.html", user=session["user"])
+        return render_template("home.html", user=session["user"])
     return redirect("/login")
 
         return "Correo o contraseña incorrectos"
