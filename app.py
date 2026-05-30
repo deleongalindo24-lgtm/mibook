@@ -9,14 +9,14 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 # -------------------------
-# CONEXIÓN SEGURA POSTGRES
+# CONEXIÓN POSTGRES
 # -------------------------
 def get_db():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
 # -------------------------
-# CREAR TABLAS (UNA VEZ)
+# CREAR TABLAS
 # -------------------------
 def init_db():
     conn = None
@@ -148,7 +148,7 @@ def login():
 
 
 # -------------------------
-# CREAR POSTS
+# POSTS
 # -------------------------
 @app.route("/post", methods=["POST"])
 def post():
