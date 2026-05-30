@@ -27,7 +27,9 @@ init_db()
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    if "user" in session:
+        return render_template("home.html", user=session["user"])
+    return redirect("/login")
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -74,11 +76,9 @@ def login():
 
         conn.close()
 
-        @app.route("/")
-def home():
-    if "user" in session:
-        return render_template("home.html", user=session["user"])
-    return redirect("/login")
+        if user:
+            session["user"] = user[1]
+            return redirect("/")
 
         return "Correo o contraseña incorrectos"
 
