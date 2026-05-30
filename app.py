@@ -1,56 +1,45 @@
 from flask import Flask, render_template, request, redirect, session
-import sqlite3
+import psycopg2
+import os
 
 app = Flask(__name__)
 app.secret_key = "mibook_secret"
 
-
-def init_db():
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
-init_db()
+def get_db():
+    return psycopg2.connect(DATABASE_URL)
 
 
 @app.route("/")
 def home():
-    if "user" in session:
-        return render_template("home.html", user=session["user"])
-    return redirect("/login")
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM posts ORDER BY id DESC")
+    posts = cur.fetchall()
+
+    conn.close()
+
+    return render_template("home.html", user=session["user"], posts=posts)
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        name = request.form["name"]
-        email = request.form["email"]
-        password = request.form["password"]
+        conn = get_db()
+        cur = conn.cursor()
 
-        conn = sqlite3.connect("users.db")
-        c = conn.cursor()
+        cur.execute(
+            "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
+            (request.form["name"], request.form["email"], request.form["password"])
+        )
 
-        try:
-            c.execute(
-                "INSERT INTO users (name,email,password) VALUES (?,?,?)",
-                (name, email, password)
-            )
-            conn.commit()
-        except:
-            return "Ese correo ya existe"
-
+        conn.commit()
         conn.close()
 
         return redirect("/login")
@@ -61,35 +50,46 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        conn = get_db()
+        cur = conn.cursor()
 
-        conn = sqlite3.connect("users.db")
-        c = conn.cursor()
-
-        c.execute(
-            "SELECT * FROM users WHERE email=? AND password=?",
-            (email, password)
+        cur.execute(
+            "SELECT * FROM users WHERE email=%s AND password=%s",
+            (request.form["email"], request.form["password"])
         )
 
-        user = c.fetchone()
-
+        user = cur.fetchone()
         conn.close()
 
         if user:
             session["user"] = user[1]
             return redirect("/")
 
-        return "Correo o contraseña incorrectos"
+        return "Login incorrecto"
 
     return render_template("login.html")
+
+
+@app.route("/post", methods=["POST"])
+def post():
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO posts(content,user_name) VALUES(%s,%s)",
+        (request.form["content"], session["user"])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
 
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
