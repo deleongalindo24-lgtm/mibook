@@ -9,16 +9,17 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 # -------------------------
-# CONEXIÓN SEGURA A DB
+# CONEXIÓN SEGURA POSTGRES
 # -------------------------
 def get_db():
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
 # -------------------------
-# CREAR TABLAS AUTOMÁTICAS
+# CREAR TABLAS (UNA VEZ)
 # -------------------------
 def init_db():
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -41,10 +42,13 @@ def init_db():
         """)
 
         conn.commit()
-        conn.close()
 
     except Exception as e:
         print("Error init_db:", e)
+
+    finally:
+        if conn:
+            conn.close()
 
 
 init_db()
@@ -58,19 +62,22 @@ def home():
     if "user" not in session:
         return redirect("/login")
 
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
 
-        cur.execute("SELECT * FROM posts ORDER BY id DESC")
+        cur.execute("SELECT content, user_name FROM posts ORDER BY id DESC")
         posts = cur.fetchall()
-
-        conn.close()
 
         return render_template("home.html", user=session["user"], posts=posts)
 
     except Exception as e:
-        return f"Error cargando home: {e}"
+        return f"Error home: {e}"
+
+    finally:
+        if conn:
+            conn.close()
 
 
 # -------------------------
@@ -79,6 +86,7 @@ def home():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        conn = None
         try:
             conn = get_db()
             cur = conn.cursor()
@@ -93,12 +101,14 @@ def register():
             )
 
             conn.commit()
-            conn.close()
-
             return redirect("/login")
 
         except Exception as e:
-            return f"Error registro: {e}"
+            return f"Error register: {e}"
+
+        finally:
+            if conn:
+                conn.close()
 
     return render_template("register.html")
 
@@ -109,26 +119,30 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        conn = None
         try:
             conn = get_db()
             cur = conn.cursor()
 
             cur.execute(
-                "SELECT * FROM users WHERE email=%s AND password=%s",
+                "SELECT name FROM users WHERE email=%s AND password=%s",
                 (request.form["email"], request.form["password"])
             )
 
             user = cur.fetchone()
-            conn.close()
 
             if user:
-                session["user"] = user[1]
+                session["user"] = user[0]
                 return redirect("/")
 
             return "Login incorrecto"
 
         except Exception as e:
             return f"Error login: {e}"
+
+        finally:
+            if conn:
+                conn.close()
 
     return render_template("login.html")
 
@@ -141,6 +155,7 @@ def post():
     if "user" not in session:
         return redirect("/login")
 
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -151,12 +166,14 @@ def post():
         )
 
         conn.commit()
-        conn.close()
-
         return redirect("/")
 
     except Exception as e:
         return f"Error post: {e}"
+
+    finally:
+        if conn:
+            conn.close()
 
 
 # -------------------------
@@ -168,8 +185,5 @@ def logout():
     return redirect("/login")
 
 
-# -------------------------
-# RUN LOCAL
-# -------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
