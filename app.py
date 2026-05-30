@@ -27,9 +27,7 @@ init_db()
 
 @app.route("/")
 def home():
-    if "user" in session:
-        return f"Bienvenido {session['user']}"
-    return redirect("/login")
+    return render_template("home.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
