@@ -2,16 +2,65 @@
 <html>
 <head>
     <title>MiBook</title>
+    <style>
+        body{
+            font-family:Arial;
+            background:#f0f2f5;
+        }
+
+        .topbar{
+            background:#1877f2;
+            color:white;
+            padding:15px;
+            font-size:22px;
+        }
+
+        .container{
+            width:600px;
+            margin:20px auto;
+        }
+
+        .card{
+            background:white;
+            padding:15px;
+            border-radius:10px;
+            margin-bottom:10px;
+        }
+
+        textarea{
+            width:100%;
+            padding:10px;
+        }
+
+        button{
+            background:#1877f2;
+            color:white;
+            border:none;
+            padding:10px;
+            margin-top:5px;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Bienvenido a MiBook</h1>
+<div class="topbar">
+    Bienvenido {{ user }}
+</div>
 
-<p>Página principal</p>
+<div class="container">
 
-<a href="/login">Iniciar sesión</a>
-<br><br>
-<a href="/register">Crear cuenta</a>
+    <div class="card">
+        <h3>Crear publicación</h3>
+        <textarea placeholder="¿Qué estás pensando?"></textarea>
+        <button>Publicar</button>
+    </div>
+
+    <div class="card">
+        <h3>Publicaciones</h3>
+        <p>Aquí aparecerán los posts de todos los usuarios</p>
+    </div>
+
+</div>
 
 </body>
 </html>
