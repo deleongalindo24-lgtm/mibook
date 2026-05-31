@@ -1,13 +1,3 @@
-from flask import Flask, render_template, request, redirect, session
-import psycopg2
-import os
-
-app = Flask(__name__)
-app.secret_key = "mibook_secret"
-
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
-
 # -------------------------
 # CONEXIÓN POSTGRES
 # -------------------------
@@ -24,16 +14,16 @@ def init_db():
         cur = conn.cursor()
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS users(
                 id SERIAL PRIMARY KEY,
                 name TEXT,
-                email TEXT UNIQUE,
+                email TEXT,
                 password TEXT
             )
         """)
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS posts (
+            CREATE TABLE IF NOT EXISTS posts(
                 id SERIAL PRIMARY KEY,
                 content TEXT,
                 user_name TEXT
@@ -44,7 +34,7 @@ def init_db():
         conn.close()
 
     except Exception as e:
-        print("DB init error:", e)
+        print("Error init_db:", e)
 
 
 init_db()
@@ -169,7 +159,7 @@ def logout():
 
 
 # -------------------------
-# RUN LOCAL
+# RUN
 # -------------------------
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
