@@ -1,13 +1,76 @@
-<h1>ZENTRI</h1>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zentri - Register</title>
+    <style>
+        body{
+            font-family: Arial;
+            background:#f0f2f5;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
 
-<form method="POST">
-    <h2>Crear cuenta</h2>
+        .box{
+            background:white;
+            padding:30px;
+            border-radius:12px;
+            width:320px;
+            box-shadow:0px 4px 15px rgba(0,0,0,0.1);
+            text-align:center;
+        }
 
-    <input name="name" placeholder="Nombre">
-    <input name="email" placeholder="Email">
-    <input name="password" type="password" placeholder="Password">
+        h1{
+            color:#1877f2;
+            font-size:32px;
+        }
 
-    <button type="submit">Registrar</button>
-</form>
+        input{
+            width:100%;
+            padding:12px;
+            margin:8px 0;
+            border:1px solid #ddd;
+            border-radius:8px;
+        }
 
-<a href="/login">Ya tengo cuenta</a>
+        button{
+            width:100%;
+            padding:12px;
+            background:#42b72a;
+            color:white;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;
+        }
+
+        button:hover{
+            background:#36a420;
+        }
+
+        a{
+            display:block;
+            margin-top:10px;
+            color:#1877f2;
+            text-decoration:none;
+        }
+    </style>
+</head>
+
+<body>
+<div class="box">
+    <h1>ZENTRI</h1>
+
+    <form method="POST">
+        <input name="name" placeholder="Nombre">
+        <input name="email" placeholder="Correo">
+        <input name="password" type="password" placeholder="Contraseña">
+
+        <button type="submit">Crear cuenta</button>
+    </form>
+
+    <a href="/login">Ya tengo cuenta</a>
+</div>
+</body>
+</html>
