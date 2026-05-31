@@ -35,7 +35,7 @@
             border-radius:8px;
         }
 
-        button{
+        .btn-login{
             width:100%;
             padding:12px;
             background:#1877f2;
@@ -44,22 +44,33 @@
             border-radius:8px;
             cursor:pointer;
             font-weight:bold;
+            margin-top:8px;
         }
 
-        button:hover{
+        .btn-login:hover{
             background:#145ec9;
         }
 
-        a{
-            display:block;
+        .btn-register{
+            width:100%;
+            padding:12px;
+            background:#42b72a;
+            color:white;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:bold;
             margin-top:10px;
-            color:#1877f2;
-            text-decoration:none;
+        }
+
+        .btn-register:hover{
+            background:#36a420;
         }
     </style>
 </head>
 
 <body>
+
 <div class="box">
     <h1>ZENTRI</h1>
 
@@ -67,10 +78,15 @@
         <input name="email" placeholder="Correo">
         <input name="password" type="password" placeholder="Contraseña">
 
-        <button type="submit">Iniciar sesión</button>
+        <button class="btn-login" type="submit">Iniciar sesión</button>
     </form>
 
-    <a href="/register">Crear cuenta nueva</a>
+    <!-- 🔥 BOTÓN NUEVO VERDE -->
+    <form action="/register">
+        <button class="btn-register" type="submit">Crear cuenta nueva</button>
+    </form>
+
 </div>
+
 </body>
 </html>
