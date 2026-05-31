@@ -3,6 +3,7 @@ import psycopg2
 import os
 import hashlib
 import logging
+import traceback
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
@@ -17,13 +18,13 @@ logging.basicConfig(level=logging.INFO)
 # -------------------------
 def get_db():
     if not DATABASE_URL:
-        raise Exception("DATABASE_URL NO CONFIGURADA")
+        raise Exception("DATABASE_URL NO CONFIGURADA EN RENDER")
 
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
 # -------------------------
-# INIT DB (AUTO FIX COMPLETO)
+# INIT DB (SIN ERRORES)
 # -------------------------
 def init_db():
     try:
@@ -34,18 +35,18 @@ def init_db():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
+                name TEXT,
+                email TEXT UNIQUE,
+                password TEXT
             )
         """)
 
-        # POSTS (sin likes al inicio)
+        # POSTS
         cur.execute("""
             CREATE TABLE IF NOT EXISTS posts (
                 id SERIAL PRIMARY KEY,
-                user_name TEXT NOT NULL,
-                content TEXT NOT NULL
+                user_name TEXT,
+                content TEXT
             )
         """)
 
@@ -59,7 +60,7 @@ def init_db():
             )
         """)
 
-        # 🔥 AUTO FIX: columna likes
+        # FIX LIKES AUTOMÁTICO
         cur.execute("""
             DO $$
             BEGIN
@@ -76,13 +77,12 @@ def init_db():
         conn.commit()
         conn.close()
 
-        print("TABLAS OK (AUTO FIX ACTIVADO)")
+        print("DB OK")
 
     except Exception as e:
-        print("ERROR INIT DB:", e)
+        print("ERROR DB:", e)
 
 
-# Ejecutar solo si hay DB
 if DATABASE_URL:
     init_db()
 
@@ -100,7 +100,7 @@ def home():
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT id, user_name, content, likes
+            SELECT id, user_name, content, COALESCE(likes,0)
             FROM posts
             ORDER BY id DESC
         """)
@@ -110,9 +110,9 @@ def home():
 
         return render_template("home.html", user=session["user"], posts=posts)
 
-    except Exception as e:
-        logging.error(f"HOME ERROR: {e}")
-        return f"Error en home: {e}"
+    except Exception:
+        error = traceback.format_exc()
+        return f"ERROR HOME:\n{error}"
 
 
 # -------------------------
@@ -128,10 +128,10 @@ def register():
         conn = get_db()
         cur = conn.cursor()
 
-        cur.execute(
-            "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
-            (name, email, password)
-        )
+        cur.execute("""
+            INSERT INTO users(name,email,password)
+            VALUES(%s,%s,%s)
+        """, (name, email, password))
 
         conn.commit()
         conn.close()
@@ -153,10 +153,10 @@ def login():
         conn = get_db()
         cur = conn.cursor()
 
-        cur.execute(
-            "SELECT name FROM users WHERE email=%s AND password=%s",
-            (email, password)
-        )
+        cur.execute("""
+            SELECT name FROM users
+            WHERE email=%s AND password=%s
+        """, (email, password))
 
         user = cur.fetchone()
         conn.close()
@@ -181,10 +181,10 @@ def post():
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute(
-        "INSERT INTO posts(user_name,content) VALUES(%s,%s)",
-        (session["user"], request.form["content"])
-    )
+    cur.execute("""
+        INSERT INTO posts(user_name,content)
+        VALUES(%s,%s)
+    """, (session["user"], request.form["content"]))
 
     conn.commit()
     conn.close()
@@ -203,37 +203,11 @@ def like(post_id):
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute(
-        "UPDATE posts SET likes = COALESCE(likes,0) + 1 WHERE id=%s",
-        (post_id,)
-    )
-
-    conn.commit()
-    conn.close()
-
-    return redirect("/")
-
-
-# -------------------------
-# COMMENT
-# -------------------------
-@app.route("/comment/<int:post_id>", methods=["POST"])
-def comment(post_id):
-    if "user" not in session:
-        return redirect("/login")
-
-    text = request.form.get("comment")
-
-    if not text:
-        return redirect("/")
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute(
-        "INSERT INTO comments(post_id,user_name,comment) VALUES(%s,%s,%s)",
-        (post_id, session["user"], text)
-    )
+    cur.execute("""
+        UPDATE posts
+        SET likes = COALESCE(likes,0) + 1
+        WHERE id=%s
+    """, (post_id,))
 
     conn.commit()
     conn.close()
@@ -250,8 +224,5 @@ def logout():
     return redirect("/login")
 
 
-# -------------------------
-# RUN
-# -------------------------
 if __name__ == "__main__":
     app.run()
