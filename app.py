@@ -2,18 +2,15 @@ from flask import Flask, render_template, request, redirect, session
 import psycopg2
 import os
 import hashlib
-import logging
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-logging.basicConfig(level=logging.INFO)
-
 
 # -------------------------
-# DB
+# CONEXIÓN DB
 # -------------------------
 def get_db():
     if not DATABASE_URL:
@@ -22,24 +19,31 @@ def get_db():
 
 
 # -------------------------
-# INIT DB COMPLETO
+# BASE DE DATOS (CORREGIDA)
 # -------------------------
 def init_db():
     conn = get_db()
     cur = conn.cursor()
 
+    # BORRAR TODO PARA EVITAR ERRORES DE COLUMNAS
+    cur.execute("DROP TABLE IF EXISTS comments")
+    cur.execute("DROP TABLE IF EXISTS messages")
+    cur.execute("DROP TABLE IF EXISTS posts")
+    cur.execute("DROP TABLE IF EXISTS users")
+
+    # USERS
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE users (
             id SERIAL PRIMARY KEY,
             name TEXT,
             email TEXT UNIQUE,
-            password TEXT,
-            avatar TEXT DEFAULT 'default.png'
+            password TEXT
         )
     """)
 
+    # POSTS
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS posts (
+        CREATE TABLE posts (
             id SERIAL PRIMARY KEY,
             user_name TEXT,
             content TEXT,
@@ -48,8 +52,9 @@ def init_db():
         )
     """)
 
+    # COMMENTS
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS comments (
+        CREATE TABLE comments (
             id SERIAL PRIMARY KEY,
             post_id INTEGER,
             user_name TEXT,
@@ -57,8 +62,9 @@ def init_db():
         )
     """)
 
+    # CHAT
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
+        CREATE TABLE messages (
             id SERIAL PRIMARY KEY,
             user_name TEXT,
             message TEXT
@@ -69,6 +75,7 @@ def init_db():
     conn.close()
 
 
+# 🔥 EJECUTAR AUTOMÁTICO
 init_db()
 
 
@@ -151,7 +158,7 @@ def login():
 
 
 # -------------------------
-# POST CREATE (TEXT + IMAGE)
+# POST
 # -------------------------
 @app.route("/post", methods=["POST"])
 def post():
@@ -180,21 +187,18 @@ def post():
 
 
 # -------------------------
-# EDIT POST
+# LIKE
 # -------------------------
-@app.route("/edit/<int:post_id>", methods=["POST"])
-def edit(post_id):
-    if "user" not in session:
-        return redirect("/login")
-
+@app.route("/like/<int:post_id>")
+def like(post_id):
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
         UPDATE posts
-        SET content=%s
-        WHERE id=%s AND user_name=%s
-    """, (request.form["content"], post_id, session["user"]))
+        SET likes = COALESCE(likes,0) + 1
+        WHERE id=%s
+    """, (post_id,))
 
     conn.commit()
     conn.close()
@@ -225,30 +229,13 @@ def delete(post_id):
 
 
 # -------------------------
-# LIKE
-# -------------------------
-@app.route("/like/<int:post_id>")
-def like(post_id):
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-        UPDATE posts
-        SET likes = likes + 1
-        WHERE id=%s
-    """, (post_id,))
-
-    conn.commit()
-    conn.close()
-
-    return redirect("/")
-
-
-# -------------------------
 # COMMENT
 # -------------------------
 @app.route("/comment/<int:post_id>", methods=["POST"])
 def comment(post_id):
+    if "user" not in session:
+        return redirect("/login")
+
     conn = get_db()
     cur = conn.cursor()
 
@@ -264,29 +251,13 @@ def comment(post_id):
 
 
 # -------------------------
-# PROFILE
-# -------------------------
-@app.route("/profile/<name>")
-def profile(name):
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("SELECT name,email FROM users WHERE name=%s", (name,))
-    user = cur.fetchone()
-
-    cur.execute("SELECT content FROM posts WHERE user_name=%s", (name,))
-    posts = cur.fetchall()
-
-    conn.close()
-
-    return render_template("profile.html", user=user, posts=posts)
-
-
-# -------------------------
-# CHAT (BÁSICO)
+# CHAT
 # -------------------------
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
+    if "user" not in session:
+        return redirect("/login")
+
     conn = get_db()
     cur = conn.cursor()
 
@@ -298,12 +269,35 @@ def chat():
 
         conn.commit()
 
-    cur.execute("SELECT user_name,message FROM messages")
-    messages = cur.fetchall()
+    cur.execute("""
+        SELECT user_name,message
+        FROM messages
+        ORDER BY id ASC
+    """)
 
+    messages = cur.fetchall()
     conn.close()
 
     return render_template("chat.html", messages=messages)
+
+
+# -------------------------
+# PROFILE
+# -------------------------
+@app.route("/profile/<name>")
+def profile(name):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT name,email FROM users WHERE name=%s", (name,))
+    user = cur.fetchone()
+
+    cur.execute("SELECT content,image FROM posts WHERE user_name=%s", (name,))
+    posts = cur.fetchall()
+
+    conn.close()
+
+    return render_template("profile.html", user=user, posts=posts)
 
 
 # -------------------------
