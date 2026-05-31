@@ -13,17 +13,17 @@ logging.basicConfig(level=logging.INFO)
 
 
 # -------------------------
-# DB CONNECTION SEGURA
+# DB CONNECTION
 # -------------------------
 def get_db():
     if not DATABASE_URL:
-        raise Exception("❌ DATABASE_URL no está configurada en Render")
+        raise Exception("DATABASE_URL NO CONFIGURADA EN RENDER")
 
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
 # -------------------------
-# INIT DB (SE EJECUTA SOLO UNA VEZ MANUALMENTE)
+# INIT DB
 # -------------------------
 def init_db():
     conn = get_db()
@@ -70,7 +70,7 @@ def home():
 
 
 # -------------------------
-# REGISTER
+# REGISTER (ARREGLADO + DEBUG REAL)
 # -------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -93,8 +93,8 @@ def register():
             return redirect("/login")
 
         except Exception as e:
-            logging.error(f"Register error: {e}")
-            return "Error en registro"
+            logging.error(f"REGISTER ERROR: {e}")
+            return f"Error en registro: {e}"
 
         finally:
             if conn:
@@ -104,7 +104,7 @@ def register():
 
 
 # -------------------------
-# LOGIN
+# LOGIN (ARREGLADO + DEBUG REAL)
 # -------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -131,8 +131,8 @@ def login():
             return "Login incorrecto"
 
         except Exception as e:
-            logging.error(f"Login error: {e}")
-            return "Error en login"
+            logging.error(f"LOGIN ERROR: {e}")
+            return f"Error en login: {e}"
 
         finally:
             if conn:
@@ -163,8 +163,8 @@ def post():
         return redirect("/")
 
     except Exception as e:
-        logging.error(f"Post error: {e}")
-        return "Error al publicar"
+        logging.error(f"POST ERROR: {e}")
+        return f"Error al publicar: {e}"
 
     finally:
         if conn:
@@ -181,7 +181,7 @@ def logout():
 
 
 # -------------------------
-# RUN LOCAL ONLY
+# RUN
 # -------------------------
 if __name__ == "__main__":
     app.run(debug=True)
