@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 # -------------------------
-# DB CONNECTION
+# CONEXIÓN DB
 # -------------------------
 def get_db():
     if not DATABASE_URL:
@@ -23,14 +23,13 @@ def get_db():
 
 
 # -------------------------
-# INIT DB (ZENTRI PRO)
+# CREAR TABLAS
 # -------------------------
 def init_db():
     try:
         conn = get_db()
         cur = conn.cursor()
 
-        # USERS
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -40,7 +39,6 @@ def init_db():
             )
         """)
 
-        # POSTS
         cur.execute("""
             CREATE TABLE IF NOT EXISTS posts (
                 id SERIAL PRIMARY KEY,
@@ -50,59 +48,62 @@ def init_db():
             )
         """)
 
-        # LIKES (evita doble like)
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS likes (
-                id SERIAL PRIMARY KEY,
-                user_name TEXT,
-                post_id INTEGER
-            )
-        """)
-
-        # COMMENTS
         cur.execute("""
             CREATE TABLE IF NOT EXISTS comments (
                 id SERIAL PRIMARY KEY,
-                post_id INTEGER,
-                user_name TEXT,
-                comment TEXT
+                post_id INTEGER NOT NULL,
+                user_name TEXT NOT NULL,
+                comment TEXT NOT NULL
+            )
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS likes (
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER NOT NULL,
+                user_name TEXT NOT NULL
             )
         """)
 
         conn.commit()
         conn.close()
 
-        print("ZENTRI PRO DB LISTA")
+        print("TABLAS OK")
 
     except Exception as e:
-        print("ERROR DB:", e)
+        print("ERROR INIT DB:", e)
 
 
-init_db()
+if DATABASE_URL:
+    init_db()
 
 
 # -------------------------
-# HOME (FEED)
+# HOME
 # -------------------------
 @app.route("/")
 def home():
     if "user" not in session:
         return redirect("/login")
 
-    conn = get_db()
-    cur = conn.cursor()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute("""
-        SELECT id, user_name, content, likes
-        FROM posts
-        ORDER BY id DESC
-    """)
+        cur.execute("""
+            SELECT id, user_name, content, likes
+            FROM posts
+            ORDER BY id DESC
+        """)
 
-    posts = cur.fetchall()
+        posts = cur.fetchall()
+        conn.close()
 
-    conn.close()
+        return render_template("home.html", user=session["user"], posts=posts)
 
-    return render_template("home.html", user=session["user"], posts=posts)
+    except Exception as e:
+        logging.error(f"HOME ERROR: {e}")
+        return "Error en home"
 
 
 # -------------------------
@@ -161,7 +162,7 @@ def login():
 
 
 # -------------------------
-# CREAR POST
+# POST
 # -------------------------
 @app.route("/post", methods=["POST"])
 def post():
@@ -183,7 +184,7 @@ def post():
 
 
 # -------------------------
-# LIKE POST ❤️
+# LIKE
 # -------------------------
 @app.route("/like/<int:post_id>")
 def like(post_id):
@@ -193,22 +194,7 @@ def like(post_id):
     conn = get_db()
     cur = conn.cursor()
 
-    # evitar doble like
-    cur.execute(
-        "SELECT * FROM likes WHERE user_name=%s AND post_id=%s",
-        (session["user"], post_id)
-    )
-
-    if not cur.fetchone():
-        cur.execute(
-            "INSERT INTO likes(user_name,post_id) VALUES(%s,%s)",
-            (session["user"], post_id)
-        )
-
-        cur.execute(
-            "UPDATE posts SET likes = likes + 1 WHERE id=%s",
-            (post_id,)
-        )
+    cur.execute("UPDATE posts SET likes = likes + 1 WHERE id=%s", (post_id,))
 
     conn.commit()
     conn.close()
@@ -217,19 +203,24 @@ def like(post_id):
 
 
 # -------------------------
-# COMENTARIOS 💬
+# COMMENT
 # -------------------------
 @app.route("/comment/<int:post_id>", methods=["POST"])
 def comment(post_id):
     if "user" not in session:
         return redirect("/login")
 
+    comment_text = request.form.get("comment")
+
+    if not comment_text:
+        return redirect("/")
+
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute(
         "INSERT INTO comments(post_id,user_name,comment) VALUES(%s,%s,%s)",
-        (post_id, session["user"], request.form["comment"])
+        (post_id, session["user"], comment_text)
     )
 
     conn.commit()
