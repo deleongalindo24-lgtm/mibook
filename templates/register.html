@@ -1,64 +1,7 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Registro</title>
-
-<style>
-body{
-    font-family:Arial;
-    background:#f0f2f5;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    margin:0;
-}
-
-.box{
-    background:white;
-    padding:30px;
-    border-radius:12px;
-    width:350px;
-    box-shadow:0 4px 12px rgba(0,0,0,.15);
-    text-align:center;
-}
-
-input{
-    width:100%;
-    padding:12px;
-    margin:8px 0;
-    border-radius:8px;
-    border:1px solid #ccc;
-    box-sizing:border-box;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    background:#42b72a;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-}
-</style>
-</head>
-<body>
-
-<div class="box">
-    <h1>Crear cuenta</h1>
-
-    <form method="POST">
-        <input type="text" name="name" placeholder="Nombre" required>
-        <input type="email" name="email" placeholder="Correo" required>
-        <input type="password" name="password" placeholder="Contraseña" required>
-
-        <button type="submit">Crear cuenta</button>
-    </form>
-
-</div>
-
-</body>
-</html>
+<form method="POST">
+    <h2>Registro</h2>
+    <input name="name" placeholder="Nombre">
+    <input name="email" placeholder="Email">
+    <input name="password" type="password" placeholder="Password">
+    <button>Crear cuenta</button>
+</form>
