@@ -3,12 +3,23 @@ def home():
     if "user" not in session:
         return redirect("/login")
 
-    conn = get_db()
-    cur = conn.cursor()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute("SELECT id, user_name, content, likes FROM posts ORDER BY id DESC")
-    posts = cur.fetchall()
+        cur.execute("""
+            SELECT id, user_name, content, likes
+            FROM posts
+            ORDER BY id DESC
+        """)
 
-    conn.close()
+        posts = cur.fetchall()
 
-    return f"{posts}"
+        conn.close()
+
+        return render_template("home.html", user=session["user"], posts=posts)
+
+    except Exception as e:
+        # 👇 ahora SÍ verás el error real
+        logging.error(f"ERROR REAL EN HOME: {e}")
+        return f"ERROR REAL EN HOME: {e}"
