@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Perfil ZENTRI</title>
+</head>
+<body>
+
+<h2>Perfil de {{ user[0] }}</h2>
+<p>Email: {{ user[1] }}</p>
+
+<hr>
+
+<h3>Publicaciones</h3>
+
+{% for post in posts %}
+    <p>{{ post[0] }}</p>
+    {% if post[1] %}
+        <img src="/static/{{ post[1] }}" width="150">
+    {% endif %}
+    <hr>
+{% endfor %}
+
+</body>
+</html>
