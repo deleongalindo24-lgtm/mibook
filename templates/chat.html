@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat ZENTRI</title>
+</head>
+<body>
+
+<h2>Chat</h2>
+
+{% for m in messages %}
+    <p><b>{{ m[0] }}:</b> {{ m[1] }}</p>
+{% endfor %}
+
+<form method="POST">
+    <input name="message" placeholder="Escribe mensaje">
+    <button>Enviar</button>
+</form>
+
+</body>
+</html>
