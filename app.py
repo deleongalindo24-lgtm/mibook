@@ -3,55 +3,125 @@ import psycopg2
 import os
 
 app = Flask(__name__)
-app.secret_key = "mibook_secret"
+app.secret_key = "mi_secret_super_seguro"
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
-# -------------------------
-# CONEXIÓN POSTGRES
-# -------------------------
 def get_db():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
-# -------------------------
-# CREAR TABLAS
-# -------------------------
 def init_db():
-    try:
-        conn = get_db()
-        cur = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                name TEXT,
-                email TEXT UNIQUE,
-                password TEXT
-            )
-        """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            email TEXT UNIQUE,
+            password TEXT
+        )
+    """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS posts (
-                id SERIAL PRIMARY KEY,
-                content TEXT,
-                user_name TEXT
-            )
-        """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS posts (
+            id SERIAL PRIMARY KEY,
+            user_name TEXT,
+            content TEXT
+        )
+    """)
 
-        conn.commit()
-        conn.close()
-
-    except Exception as e:
-        print("Error init_db:", e)
+    conn.commit()
+    conn.close()
 
 
 init_db()
 
 
-# -------------------------
-# RUN
-# -------------------------
+@app.route("/")
+def home():
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT user_name, content FROM posts ORDER BY id DESC")
+    posts = cur.fetchall()
+
+    conn.close()
+
+    return render_template("home.html", user=session["user"], posts=posts)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute(
+            "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
+            (request.form["name"], request.form["email"], request.form["password"])
+        )
+
+        conn.commit()
+        conn.close()
+
+        return redirect("/login")
+
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT name FROM users WHERE email=%s AND password=%s",
+            (request.form["email"], request.form["password"])
+        )
+
+        user = cur.fetchone()
+        conn.close()
+
+        if user:
+            session["user"] = user[0]
+            return redirect("/")
+
+        return "Login incorrecto"
+
+    return render_template("login.html")
+
+
+@app.route("/post", methods=["POST"])
+def post():
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO posts(user_name,content) VALUES(%s,%s)",
+        (session["user"], request.form["content"])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
