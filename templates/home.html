@@ -1,35 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Zentri</title>
-</head>
-<body>
+@app.route("/")
+def home():
+    if "user" not in session:
+        return redirect("/login")
 
-<h1>Bienvenido {{ user }}</h1>
+    conn = get_db()
+    cur = conn.cursor()
 
-<a href="/logout">Salir</a>
+    cur.execute("SELECT id, user_name, content, likes FROM posts ORDER BY id DESC")
+    posts = cur.fetchall()
 
-<form method="POST" action="/post">
-    <textarea name="content" placeholder="¿Qué estás pensando?"></textarea>
-    <button>Publicar</button>
-</form>
+    conn.close()
 
-<hr>
-
-{% for post in posts %}
-    <div>
-        <h3>{{ post[1] }}</h3>
-        <p>{{ post[2] }}</p>
-        <p>❤️ {{ post[3] }} likes</p>
-
-        <a href="/like/{{ post[0] }}">Like</a>
-
-        <form method="POST" action="/comment/{{ post[0] }}">
-            <input name="comment" placeholder="Comentario">
-        </form>
-    </div>
-    <hr>
-{% endfor %}
-
-</body>
-</html>
+    return f"{posts}"
