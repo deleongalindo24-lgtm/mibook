@@ -1,61 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>MiBook</title>
-    <style>
-        body{
-            font-family:Arial;
-            background:#f0f2f5;
-        }
+{% extends "base.html" %}
 
-        .topbar{
-            background:#1877f2;
-            color:white;
-            padding:15px;
-            font-size:22px;
-        }
+{% block content %}
 
-        .container{
-            width:600px;
-            margin:20px auto;
-        }
+<h3>Hola {{ user }}</h3>
 
-        .card{
-            background:white;
-            padding:15px;
-            border-radius:10px;
-            margin-bottom:10px;
-        }
+<form method="POST" action="/post">
+    <textarea name="content" placeholder="¿Qué estás pensando?"></textarea>
+    <button>Publicar</button>
+</form>
 
-        textarea{
-            width:100%;
-            padding:10px;
-        }
+<hr>
 
-        button{
-            background:#1877f2;
-            color:white;
-            border:none;
-            padding:10px;
-            margin-top:5px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="topbar">
-    Bienvenido {{ user }}
+{% for p in posts %}
+<div class="post">
+    <b>{{ p[0] }}</b>
+    <p>{{ p[1] }}</p>
 </div>
+{% endfor %}
 
-<div class="container">
-
-    <div class="card">
-        <h3>Crear publicación</h3>
-        <textarea placeholder="¿Qué estás pensando?"></textarea>
-        <button>Publicar</button>
-    </div>
-
-</div>
-
-</body>
-</html>
+{% endblock %}
