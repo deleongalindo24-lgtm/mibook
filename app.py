@@ -1,17 +1,34 @@
 from flask import Flask, render_template, request, redirect, session
 import psycopg2
 import os
+import hashlib
+import logging
 
 app = Flask(__name__)
-app.secret_key = "mi_secret_super_seguro"
+app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_change_me")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
+# -------------------------
+# LOGGING
+# -------------------------
+logging.basicConfig(level=logging.INFO)
+
+
+# -------------------------
+# CONEXIÓN DB SEGURA
+# -------------------------
 def get_db():
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL no está configurada en Render")
+
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
+# -------------------------
+# CREAR TABLAS (MANUAL / MIGRACIÓN)
+# -------------------------
 def init_db():
     conn = get_db()
     cur = conn.cursor()
@@ -19,17 +36,17 @@ def init_db():
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
-            name TEXT,
-            email TEXT UNIQUE,
-            password TEXT
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
         )
     """)
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS posts (
             id SERIAL PRIMARY KEY,
-            user_name TEXT,
-            content TEXT
+            user_name TEXT NOT NULL,
+            content TEXT NOT NULL
         )
     """)
 
@@ -37,9 +54,13 @@ def init_db():
     conn.close()
 
 
-init_db()
+# ⚠️ NO LO EJECUTAMOS AUTOMÁTICAMENTE EN PRODUCCIÓN
+# init_db()
 
 
+# -------------------------
+# HOME
+# -------------------------
 @app.route("/")
 def home():
     if "user" not in session:
@@ -56,72 +77,112 @@ def home():
     return render_template("home.html", user=session["user"], posts=posts)
 
 
+# -------------------------
+# REGISTER (CON HASH)
+# -------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        conn = get_db()
-        cur = conn.cursor()
+        try:
+            name = request.form["name"]
+            email = request.form["email"]
+            password = request.form["password"]
 
-        cur.execute(
-            "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
-            (request.form["name"], request.form["email"], request.form["password"])
-        )
+            hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        conn.commit()
-        conn.close()
+            conn = get_db()
+            cur = conn.cursor()
 
-        return redirect("/login")
+            cur.execute(
+                "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
+                (name, email, hashed_password)
+            )
+
+            conn.commit()
+            conn.close()
+
+            return redirect("/login")
+
+        except Exception as e:
+            logging.error(f"Error register: {e}")
+            return "Error en registro"
 
     return render_template("register.html")
 
 
+# -------------------------
+# LOGIN (CON HASH)
+# -------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        conn = get_db()
-        cur = conn.cursor()
+        try:
+            email = request.form["email"]
+            password = request.form["password"]
+            hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        cur.execute(
-            "SELECT name FROM users WHERE email=%s AND password=%s",
-            (request.form["email"], request.form["password"])
-        )
+            conn = get_db()
+            cur = conn.cursor()
 
-        user = cur.fetchone()
-        conn.close()
+            cur.execute(
+                "SELECT name FROM users WHERE email=%s AND password=%s",
+                (email, hashed_password)
+            )
 
-        if user:
-            session["user"] = user[0]
-            return redirect("/")
+            user = cur.fetchone()
+            conn.close()
 
-        return "Login incorrecto"
+            if user:
+                session["user"] = user[0]
+                return redirect("/")
+
+            return "Login incorrecto"
+
+        except Exception as e:
+            logging.error(f"Error login: {e}")
+            return "Error en login"
 
     return render_template("login.html")
 
 
+# -------------------------
+# POST
+# -------------------------
 @app.route("/post", methods=["POST"])
 def post():
     if "user" not in session:
         return redirect("/login")
 
-    conn = get_db()
-    cur = conn.cursor()
+    try:
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute(
-        "INSERT INTO posts(user_name,content) VALUES(%s,%s)",
-        (session["user"], request.form["content"])
-    )
+        cur.execute(
+            "INSERT INTO posts(user_name,content) VALUES(%s,%s)",
+            (session["user"], request.form["content"])
+        )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
-    return redirect("/")
+        return redirect("/")
+
+    except Exception as e:
+        logging.error(f"Error post: {e}")
+        return "Error al publicar"
 
 
+# -------------------------
+# LOGOUT
+# -------------------------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
 
+# -------------------------
+# RUN (LOCAL ONLY)
+# -------------------------
 if __name__ == "__main__":
     app.run(debug=True)
