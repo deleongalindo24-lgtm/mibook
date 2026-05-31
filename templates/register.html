@@ -1,76 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Zentri - Register</title>
+    <title>ZENTRI - Registro</title>
     <style>
-        body{
+        body {
             font-family: Arial;
-            background:#f0f2f5;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        .box{
-            background:white;
-            padding:30px;
-            border-radius:12px;
-            width:320px;
-            box-shadow:0px 4px 15px rgba(0,0,0,0.1);
-            text-align:center;
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
         }
 
-        h1{
-            color:#1877f2;
-            font-size:32px;
+        h2 {
+            text-align: center;
+            color: green;
         }
 
-        input{
-            width:100%;
-            padding:12px;
-            margin:8px 0;
-            border:1px solid #ddd;
-            border-radius:8px;
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
         }
 
-        button{
-            width:100%;
-            padding:12px;
-            background:#42b72a;
-            color:white;
-            border:none;
-            border-radius:8px;
-            cursor:pointer;
-            font-weight:bold;
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
 
-        button:hover{
-            background:#36a420;
-        }
-
-        a{
-            display:block;
-            margin-top:10px;
-            color:#1877f2;
-            text-decoration:none;
+        .btn:focus {
+            outline: none;
+            background: green;
         }
     </style>
 </head>
-
 <body>
+
 <div class="box">
-    <h1>ZENTRI</h1>
+    <h2>Crear cuenta ZENTRI</h2>
 
     <form method="POST">
         <input name="name" placeholder="Nombre">
         <input name="email" placeholder="Correo">
         <input name="password" type="password" placeholder="Contraseña">
 
-        <button type="submit">Crear cuenta</button>
+        <button class="btn">Registrarse</button>
     </form>
-
-    <a href="/login">Ya tengo cuenta</a>
 </div>
+
 </body>
 </html>
