@@ -42,6 +42,11 @@
             border-radius: 8px;
         }
 
+        input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
         .btn-login {
             width: 100%;
             padding: 12px;
@@ -51,10 +56,15 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            transition: 0.2s;
         }
 
         .btn-login:hover {
             background: #3b82f6;
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
         }
 
         .btn-register {
@@ -67,10 +77,25 @@
             text-decoration: none;
             border-radius: 8px;
             font-weight: bold;
+            transition: 0.2s;
         }
 
         .btn-register:hover {
             background: #16a34a;
+        }
+
+        .btn-register:active {
+            transform: scale(0.98);
+        }
+
+        button, a {
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:focus, a:focus {
+            outline: none;
+            box-shadow: none;
         }
     </style>
 </head>
