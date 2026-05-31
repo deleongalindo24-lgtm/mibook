@@ -1,13 +1,106 @@
-<form method="POST">
-    <h2>Login</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
 
-    <input name="email" placeholder="Email" required>
-    <input name="password" type="password" placeholder="Password" required>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-    <button type="submit">Entrar</button>
-</form>
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
 
-<p>
-    ¿No tienes cuenta?
-    <a href="/register">Crear cuenta</a>
-</p>
+        h2 {
+            margin-bottom: 20px;
+            color: #1e40af;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #3b82f6;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: #1e40af;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #3b82f6;
+        }
+
+        .btn-register {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px;
+            width: 100%;
+            background: #22c55e;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-register:hover {
+            background: #16a34a;
+        }
+
+        .text {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>Iniciar Sesión</h2>
+
+    <form method="POST">
+        <input name="email" placeholder="Email" required>
+        <input name="password" type="password" placeholder="Password" required>
+
+        <button class="btn-login" type="submit">Entrar</button>
+    </form>
+
+    <div class="text">
+        ¿No tienes cuenta?
+    </div>
+
+    <a class="btn-register" href="/register">Crear cuenta</a>
+
+</div>
+
+</body>
+</html>
