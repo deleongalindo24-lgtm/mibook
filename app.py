@@ -10,7 +10,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 # -------------------------
-# CONEXIÓN DB
+# DB
 # -------------------------
 def get_db():
     if not DATABASE_URL:
@@ -19,19 +19,17 @@ def get_db():
 
 
 # -------------------------
-# BASE DE DATOS (CORREGIDA)
+# TABLAS
 # -------------------------
 def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # BORRAR TODO PARA EVITAR ERRORES DE COLUMNAS
     cur.execute("DROP TABLE IF EXISTS comments")
     cur.execute("DROP TABLE IF EXISTS messages")
     cur.execute("DROP TABLE IF EXISTS posts")
     cur.execute("DROP TABLE IF EXISTS users")
 
-    # USERS
     cur.execute("""
         CREATE TABLE users (
             id SERIAL PRIMARY KEY,
@@ -41,7 +39,6 @@ def init_db():
         )
     """)
 
-    # POSTS
     cur.execute("""
         CREATE TABLE posts (
             id SERIAL PRIMARY KEY,
@@ -52,7 +49,6 @@ def init_db():
         )
     """)
 
-    # COMMENTS
     cur.execute("""
         CREATE TABLE comments (
             id SERIAL PRIMARY KEY,
@@ -62,11 +58,11 @@ def init_db():
         )
     """)
 
-    # CHAT
     cur.execute("""
         CREATE TABLE messages (
             id SERIAL PRIMARY KEY,
-            user_name TEXT,
+            sender TEXT,
+            receiver TEXT,
             message TEXT
         )
     """)
@@ -75,57 +71,7 @@ def init_db():
     conn.close()
 
 
-# 🔥 EJECUTAR AUTOMÁTICO
 init_db()
-
-
-# -------------------------
-# HOME
-# -------------------------
-@app.route("/")
-def home():
-    if "user" not in session:
-        return redirect("/login")
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT id, user_name, content, image, likes
-        FROM posts
-        ORDER BY id DESC
-    """)
-
-    posts = cur.fetchall()
-    conn.close()
-
-    return render_template("home.html", user=session["user"], posts=posts)
-
-
-# -------------------------
-# REGISTER
-# -------------------------
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        name = request.form["name"]
-        email = request.form["email"]
-        password = hashlib.sha256(request.form["password"].encode()).hexdigest()
-
-        conn = get_db()
-        cur = conn.cursor()
-
-        cur.execute("""
-            INSERT INTO users(name,email,password)
-            VALUES(%s,%s,%s)
-        """, (name, email, password))
-
-        conn.commit()
-        conn.close()
-
-        return redirect("/login")
-
-    return render_template("register.html")
 
 
 # -------------------------
@@ -155,6 +101,55 @@ def login():
         return "Login incorrecto"
 
     return render_template("login.html")
+
+
+# -------------------------
+# REGISTER
+# -------------------------
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = hashlib.sha256(request.form["password"].encode()).hexdigest()
+
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO users(name,email,password)
+            VALUES(%s,%s,%s)
+        """, (name, email, password))
+
+        conn.commit()
+        conn.close()
+
+        return redirect("/login")
+
+    return render_template("register.html")
+
+
+# -------------------------
+# HOME
+# -------------------------
+@app.route("/")
+def home():
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, user_name, content, image, likes
+        FROM posts
+        ORDER BY id DESC
+    """)
+
+    posts = cur.fetchall()
+    conn.close()
+
+    return render_template("home.html", user=session["user"], posts=posts)
 
 
 # -------------------------
@@ -207,7 +202,7 @@ def like(post_id):
 
 
 # -------------------------
-# DELETE POST
+# DELETE
 # -------------------------
 @app.route("/delete/<int:post_id>")
 def delete(post_id):
@@ -229,7 +224,7 @@ def delete(post_id):
 
 
 # -------------------------
-# COMMENT
+# COMMENTS
 # -------------------------
 @app.route("/comment/<int:post_id>", methods=["POST"])
 def comment(post_id):
@@ -251,10 +246,29 @@ def comment(post_id):
 
 
 # -------------------------
-# CHAT
+# USERS LIST
 # -------------------------
-@app.route("/chat", methods=["GET", "POST"])
-def chat():
+@app.route("/users")
+def users():
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT name FROM users WHERE name != %s", (session["user"],))
+    users = cur.fetchall()
+
+    conn.close()
+
+    return render_template("users.html", users=users)
+
+
+# -------------------------
+# CHAT PRIVADO
+# -------------------------
+@app.route("/chat/<name>", methods=["GET", "POST"])
+def chat(name):
     if "user" not in session:
         return redirect("/login")
 
@@ -263,41 +277,24 @@ def chat():
 
     if request.method == "POST":
         cur.execute("""
-            INSERT INTO messages(user_name,message)
-            VALUES(%s,%s)
-        """, (session["user"], request.form["message"]))
+            INSERT INTO messages(sender,receiver,message)
+            VALUES(%s,%s,%s)
+        """, (session["user"], name, request.form["message"]))
 
         conn.commit()
 
     cur.execute("""
-        SELECT user_name,message
+        SELECT sender,message
         FROM messages
+        WHERE (sender=%s AND receiver=%s)
+        OR (sender=%s AND receiver=%s)
         ORDER BY id ASC
-    """)
+    """, (session["user"], name, name, session["user"]))
 
     messages = cur.fetchall()
     conn.close()
 
-    return render_template("chat.html", messages=messages)
-
-
-# -------------------------
-# PROFILE
-# -------------------------
-@app.route("/profile/<name>")
-def profile(name):
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("SELECT name,email FROM users WHERE name=%s", (name,))
-    user = cur.fetchone()
-
-    cur.execute("SELECT content,image FROM posts WHERE user_name=%s", (name,))
-    posts = cur.fetchall()
-
-    conn.close()
-
-    return render_template("profile.html", user=user, posts=posts)
+    return render_template("chat.html", messages=messages, chat_with=name)
 
 
 # -------------------------
