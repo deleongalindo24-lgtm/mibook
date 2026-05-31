@@ -1,25 +1,23 @@
-@app.route("/")
-def home():
-    if "user" not in session:
-        return redirect("/login")
+<h1>ZENTRI</h1>
 
-    try:
-        conn = get_db()
-        cur = conn.cursor()
+<p>Bienvenido {{ user }}</p>
 
-        cur.execute("""
-            SELECT id, user_name, content, likes
-            FROM posts
-            ORDER BY id DESC
-        """)
+<form method="POST" action="/post">
+    <input name="content" placeholder="¿Qué estás pensando?">
+    <button>Publicar</button>
+</form>
 
-        posts = cur.fetchall()
-        conn.close()
+<hr>
 
-        return render_template("home.html", user=session["user"], posts=posts)
+{% for post in posts %}
+    <div>
+        <h4>{{ post[1] }}</h4>
+        <p>{{ post[2] }}</p>
+        <p>❤️ {{ post[3] }}</p>
 
-    except Exception as e:
-        import traceback
-        error = traceback.format_exc()
-        logging.error(error)
-        return f"ERROR REAL EN HOME:\n{error}"
+        <a href="/like/{{ post[0] }}">Like</a>
+    </div>
+    <hr>
+{% endfor %}
+
+<a href="/logout">Salir</a>
