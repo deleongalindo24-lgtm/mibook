@@ -14,12 +14,12 @@ def home():
         """)
 
         posts = cur.fetchall()
-
         conn.close()
 
         return render_template("home.html", user=session["user"], posts=posts)
 
     except Exception as e:
-        # 👇 ahora SÍ verás el error real
-        logging.error(f"ERROR REAL EN HOME: {e}")
-        return f"ERROR REAL EN HOME: {e}"
+        import traceback
+        error = traceback.format_exc()
+        logging.error(error)
+        return f"ERROR REAL EN HOME:\n{error}"
