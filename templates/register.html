@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Crear cuenta</title>
+    <title>Zentri - Crear cuenta</title>
 
     <style>
         body {
@@ -22,9 +22,16 @@
             text-align: center;
         }
 
-        h2 {
-            margin-bottom: 20px;
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
             color: #16a34a;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #16a34a;
+            margin-bottom: 20px;
         }
 
         input {
@@ -33,24 +40,17 @@
             margin: 8px 0;
             border: 1px solid #ccc;
             border-radius: 8px;
-            outline: none;
-        }
-
-        input:focus {
-            border-color: #22c55e;
         }
 
         .btn-register {
             width: 100%;
             padding: 12px;
-            margin-top: 10px;
             background: #16a34a;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
         }
 
         .btn-register:hover {
@@ -67,16 +67,10 @@
             text-decoration: none;
             border-radius: 8px;
             font-weight: bold;
-            transition: 0.3s;
         }
 
         .btn-login:hover {
             background: #3b82f6;
-        }
-
-        .text {
-            margin-top: 15px;
-            font-size: 14px;
         }
     </style>
 </head>
@@ -84,6 +78,8 @@
 <body>
 
 <div class="card">
+
+    <div class="logo">Zentri</div>
 
     <h2>Crear Cuenta</h2>
 
@@ -95,9 +91,7 @@
         <button class="btn-register" type="submit">Registrarse</button>
     </form>
 
-    <div class="text">
-        ¿Ya tienes cuenta?
-    </div>
+    <p>¿Ya tienes cuenta?</p>
 
     <a class="btn-login" href="/login">Iniciar sesión</a>
 
