@@ -2,69 +2,47 @@
 <html>
 <head>
     <title>Zentri</title>
+
     <style>
         body{
             font-family: Arial;
             background:#f0f2f5;
-            margin:0;
         }
 
         .topbar{
             background:#1877f2;
             color:white;
             padding:15px;
-            font-size:24px;
+            font-size:22px;
             font-weight:bold;
         }
 
         .container{
             width:500px;
-            margin:20px auto;
-        }
-
-        .post-box{
-            background:white;
-            padding:15px;
-            border-radius:10px;
-            box-shadow:0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom:15px;
-        }
-
-        input{
-            width:80%;
-            padding:10px;
-            border-radius:8px;
-            border:1px solid #ddd;
-        }
-
-        button{
-            padding:10px;
-            background:#1877f2;
-            color:white;
-            border:none;
-            border-radius:8px;
-            cursor:pointer;
+            margin:auto;
+            margin-top:20px;
         }
 
         .post{
             background:white;
             padding:15px;
-            margin-top:15px;
+            margin-bottom:10px;
             border-radius:10px;
             box-shadow:0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .like{
-            color:#1877f2;
+        .btn{
             text-decoration:none;
+            margin-right:10px;
             font-weight:bold;
         }
 
-        .logout{
-            float:right;
-            color:white;
-            text-decoration:none;
-            font-size:14px;
+        .like{
+            color:#1877f2;
+        }
+
+        .delete{
+            color:red;
         }
     </style>
 </head>
@@ -72,27 +50,31 @@
 <body>
 
 <div class="topbar">
-    ZENTRI
-    <a class="logout" href="/logout">Salir</a>
+    ZENTRI - Hola {{ user }}
+    <a href="/logout" style="float:right; color:white;">Salir</a>
 </div>
 
 <div class="container">
 
-    <div class="post-box">
-        <form method="POST" action="/post">
-            <input name="content" placeholder="¿Qué estás pensando?">
-            <button>Publicar</button>
-        </form>
-    </div>
+<form method="POST" action="/post">
+    <input name="content" placeholder="¿Qué estás pensando?" style="width:70%;padding:10px;">
+    <button>Publicar</button>
+</form>
 
-    {% for post in posts %}
-    <div class="post">
-        <b>{{ post[1] }}</b>
-        <p>{{ post[2] }}</p>
+<br>
 
-        <a class="like" href="/like/{{ post[0] }}">❤️ {{ post[3] }}</a>
-    </div>
-    {% endfor %}
+{% for post in posts %}
+<div class="post">
+    <b>{{ post[1] }}</b>
+    <p>{{ post[2] }}</p>
+
+    <a class="btn like" href="/like/{{ post[0] }}">❤️ {{ post[3] }}</a>
+
+    {% if post[1] == user %}
+        <a class="btn delete" href="/delete/{{ post[0] }}">Eliminar</a>
+    {% endif %}
+</div>
+{% endfor %}
 
 </div>
 
