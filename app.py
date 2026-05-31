@@ -9,25 +9,21 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_change_me")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-
-# -------------------------
-# LOGGING
-# -------------------------
 logging.basicConfig(level=logging.INFO)
 
 
 # -------------------------
-# CONEXIÓN DB SEGURA
+# DB CONNECTION SEGURA
 # -------------------------
 def get_db():
     if not DATABASE_URL:
-        raise Exception("DATABASE_URL no está configurada en Render")
+        raise Exception("❌ DATABASE_URL no está configurada en Render")
 
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
 # -------------------------
-# CREAR TABLAS (MANUAL / MIGRACIÓN)
+# INIT DB (SE EJECUTA SOLO UNA VEZ MANUALMENTE)
 # -------------------------
 def init_db():
     conn = get_db()
@@ -54,10 +50,6 @@ def init_db():
     conn.close()
 
 
-# ⚠️ NO LO EJECUTAMOS AUTOMÁTICAMENTE EN PRODUCCIÓN
-# init_db()
-
-
 # -------------------------
 # HOME
 # -------------------------
@@ -78,59 +70,59 @@ def home():
 
 
 # -------------------------
-# REGISTER (CON HASH)
+# REGISTER
 # -------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        conn = None
         try:
             name = request.form["name"]
             email = request.form["email"]
-            password = request.form["password"]
-
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            password = hashlib.sha256(request.form["password"].encode()).hexdigest()
 
             conn = get_db()
             cur = conn.cursor()
 
             cur.execute(
                 "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
-                (name, email, hashed_password)
+                (name, email, password)
             )
 
             conn.commit()
-            conn.close()
-
             return redirect("/login")
 
         except Exception as e:
-            logging.error(f"Error register: {e}")
+            logging.error(f"Register error: {e}")
             return "Error en registro"
+
+        finally:
+            if conn:
+                conn.close()
 
     return render_template("register.html")
 
 
 # -------------------------
-# LOGIN (CON HASH)
+# LOGIN
 # -------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        conn = None
         try:
             email = request.form["email"]
-            password = request.form["password"]
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            password = hashlib.sha256(request.form["password"].encode()).hexdigest()
 
             conn = get_db()
             cur = conn.cursor()
 
             cur.execute(
                 "SELECT name FROM users WHERE email=%s AND password=%s",
-                (email, hashed_password)
+                (email, password)
             )
 
             user = cur.fetchone()
-            conn.close()
 
             if user:
                 session["user"] = user[0]
@@ -139,8 +131,12 @@ def login():
             return "Login incorrecto"
 
         except Exception as e:
-            logging.error(f"Error login: {e}")
+            logging.error(f"Login error: {e}")
             return "Error en login"
+
+        finally:
+            if conn:
+                conn.close()
 
     return render_template("login.html")
 
@@ -153,6 +149,7 @@ def post():
     if "user" not in session:
         return redirect("/login")
 
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -163,13 +160,15 @@ def post():
         )
 
         conn.commit()
-        conn.close()
-
         return redirect("/")
 
     except Exception as e:
-        logging.error(f"Error post: {e}")
+        logging.error(f"Post error: {e}")
         return "Error al publicar"
+
+    finally:
+        if conn:
+            conn.close()
 
 
 # -------------------------
@@ -182,7 +181,7 @@ def logout():
 
 
 # -------------------------
-# RUN (LOCAL ONLY)
+# RUN LOCAL ONLY
 # -------------------------
 if __name__ == "__main__":
     app.run(debug=True)
