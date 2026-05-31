@@ -1,91 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Zentri - Login</title>
+    <title>ZENTRI - Login</title>
     <style>
-        body{
+        body {
             font-family: Arial;
             background: #f0f2f5;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
-        .box{
-            background:white;
-            padding:30px;
-            border-radius:12px;
-            width:320px;
-            box-shadow:0px 4px 15px rgba(0,0,0,0.1);
-            text-align:center;
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
-        h1{
-            color:#1877f2;
-            font-size:32px;
-            margin-bottom:10px;
+        h2 {
+            text-align: center;
+            color: #1877f2;
         }
 
-        input{
-            width:100%;
-            padding:12px;
-            margin:8px 0;
-            border:1px solid #ddd;
-            border-radius:8px;
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
         }
 
-        .btn-login{
-            width:100%;
-            padding:12px;
-            background:#1877f2;
-            color:white;
-            border:none;
-            border-radius:8px;
-            cursor:pointer;
-            font-weight:bold;
-            margin-top:8px;
+        .btn-login {
+            width: 100%;
+            padding: 10px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
 
-        .btn-login:hover{
-            background:#145ec9;
+        .btn-register {
+            width: 100%;
+            padding: 10px;
+            background: green;
+            color: white;
+            border: none;
+            margin-top: 10px;
+            cursor: pointer;
         }
 
-        .btn-register{
-            width:100%;
-            padding:12px;
-            background:#42b72a;
-            color:white;
-            border:none;
-            border-radius:8px;
-            cursor:pointer;
-            font-weight:bold;
-            margin-top:10px;
-        }
-
-        .btn-register:hover{
-            background:#36a420;
+        .btn-login:focus,
+        .btn-register:focus {
+            outline: none;
+            background: inherit;
         }
     </style>
 </head>
-
 <body>
 
 <div class="box">
-    <h1>ZENTRI</h1>
+    <h2>ZENTRI</h2>
 
     <form method="POST">
         <input name="email" placeholder="Correo">
         <input name="password" type="password" placeholder="Contraseña">
 
-        <button class="btn-login" type="submit">Iniciar sesión</button>
+        <button class="btn-login">Iniciar sesión</button>
     </form>
 
-    <!-- 🔥 BOTÓN NUEVO VERDE -->
     <form action="/register">
-        <button class="btn-register" type="submit">Crear cuenta nueva</button>
+        <button class="btn-register">Crear cuenta</button>
     </form>
-
 </div>
 
 </body>
