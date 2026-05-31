@@ -14,17 +14,17 @@ logging.basicConfig(level=logging.INFO)
 
 
 # -------------------------
-# CONEXIÓN DB
+# DB CONNECTION
 # -------------------------
 def get_db():
     if not DATABASE_URL:
-        raise Exception("DATABASE_URL NO CONFIGURADA EN RENDER")
+        raise Exception("DATABASE_URL NO CONFIGURADA")
 
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
 # -------------------------
-# INIT DB (SIN ERRORES)
+# INIT DB (AUTO FIX TOTAL)
 # -------------------------
 def init_db():
     try:
@@ -50,7 +50,7 @@ def init_db():
             )
         """)
 
-        # COMMENTS
+        # COMMENTS (opcional futuro)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS comments (
                 id SERIAL PRIMARY KEY,
@@ -70,8 +70,7 @@ def init_db():
                 ) THEN
                     ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;
                 END IF;
-            END
-            $$;
+            END $$;
         """)
 
         conn.commit()
@@ -80,7 +79,7 @@ def init_db():
         print("DB OK")
 
     except Exception as e:
-        print("ERROR DB:", e)
+        print("DB ERROR:", e)
 
 
 if DATABASE_URL:
@@ -111,8 +110,7 @@ def home():
         return render_template("home.html", user=session["user"], posts=posts)
 
     except Exception:
-        error = traceback.format_exc()
-        return f"ERROR HOME:\n{error}"
+        return f"ERROR HOME:\n{traceback.format_exc()}"
 
 
 # -------------------------
@@ -171,7 +169,7 @@ def login():
 
 
 # -------------------------
-# POST
+# POST CREATE
 # -------------------------
 @app.route("/post", methods=["POST"])
 def post():
@@ -208,6 +206,28 @@ def like(post_id):
         SET likes = COALESCE(likes,0) + 1
         WHERE id=%s
     """, (post_id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+
+# -------------------------
+# DELETE POST
+# -------------------------
+@app.route("/delete/<int:post_id>")
+def delete_post(post_id):
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        DELETE FROM posts
+        WHERE id=%s AND user_name=%s
+    """, (post_id, session["user"]))
 
     conn.commit()
     conn.close()
