@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 # -------------------------
-# CONEXIÓN DB
+# DB CONNECTION
 # -------------------------
 def get_db():
     if not DATABASE_URL:
@@ -23,13 +23,14 @@ def get_db():
 
 
 # -------------------------
-# CREAR TABLAS AUTOMÁTICO
+# INIT DB (ZENTRI PRO)
 # -------------------------
 def init_db():
     try:
         conn = get_db()
         cur = conn.cursor()
 
+        # USERS
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -39,30 +40,49 @@ def init_db():
             )
         """)
 
+        # POSTS
         cur.execute("""
             CREATE TABLE IF NOT EXISTS posts (
                 id SERIAL PRIMARY KEY,
                 user_name TEXT NOT NULL,
-                content TEXT NOT NULL
+                content TEXT NOT NULL,
+                likes INTEGER DEFAULT 0
+            )
+        """)
+
+        # LIKES (evita doble like)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS likes (
+                id SERIAL PRIMARY KEY,
+                user_name TEXT,
+                post_id INTEGER
+            )
+        """)
+
+        # COMMENTS
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS comments (
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER,
+                user_name TEXT,
+                comment TEXT
             )
         """)
 
         conn.commit()
         conn.close()
 
-        print("TABLAS CREADAS O YA EXISTEN")
+        print("ZENTRI PRO DB LISTA")
 
     except Exception as e:
-        print("ERROR CREANDO TABLAS:", e)
+        print("ERROR DB:", e)
 
 
-# 👉 ESTO ES LO IMPORTANTE
-# Se ejecuta automáticamente al iniciar la app
 init_db()
 
 
 # -------------------------
-# HOME
+# HOME (FEED)
 # -------------------------
 @app.route("/")
 def home():
@@ -72,7 +92,12 @@ def home():
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT user_name, content FROM posts ORDER BY id DESC")
+    cur.execute("""
+        SELECT id, user_name, content, likes
+        FROM posts
+        ORDER BY id DESC
+    """)
+
     posts = cur.fetchall()
 
     conn.close()
@@ -86,26 +111,22 @@ def home():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        try:
-            name = request.form["name"]
-            email = request.form["email"]
-            password = hashlib.sha256(request.form["password"].encode()).hexdigest()
+        name = request.form["name"]
+        email = request.form["email"]
+        password = hashlib.sha256(request.form["password"].encode()).hexdigest()
 
-            conn = get_db()
-            cur = conn.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
-            cur.execute(
-                "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
-                (name, email, password)
-            )
+        cur.execute(
+            "INSERT INTO users(name,email,password) VALUES(%s,%s,%s)",
+            (name, email, password)
+        )
 
-            conn.commit()
-            conn.close()
+        conn.commit()
+        conn.close()
 
-            return redirect("/login")
-
-        except Exception as e:
-            return f"Error en registro: {e}"
+        return redirect("/login")
 
     return render_template("register.html")
 
@@ -116,57 +137,105 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        try:
-            email = request.form["email"]
-            password = hashlib.sha256(request.form["password"].encode()).hexdigest()
+        email = request.form["email"]
+        password = hashlib.sha256(request.form["password"].encode()).hexdigest()
 
-            conn = get_db()
-            cur = conn.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
-            cur.execute(
-                "SELECT name FROM users WHERE email=%s AND password=%s",
-                (email, password)
-            )
+        cur.execute(
+            "SELECT name FROM users WHERE email=%s AND password=%s",
+            (email, password)
+        )
 
-            user = cur.fetchone()
-            conn.close()
+        user = cur.fetchone()
+        conn.close()
 
-            if user:
-                session["user"] = user[0]
-                return redirect("/")
+        if user:
+            session["user"] = user[0]
+            return redirect("/")
 
-            return "Login incorrecto"
-
-        except Exception as e:
-            return f"Error en login: {e}"
+        return "Login incorrecto"
 
     return render_template("login.html")
 
 
 # -------------------------
-# POST
+# CREAR POST
 # -------------------------
 @app.route("/post", methods=["POST"])
 def post():
     if "user" not in session:
         return redirect("/login")
 
-    try:
-        conn = get_db()
-        cur = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
+    cur.execute(
+        "INSERT INTO posts(user_name,content) VALUES(%s,%s)",
+        (session["user"], request.form["content"])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+
+# -------------------------
+# LIKE POST ❤️
+# -------------------------
+@app.route("/like/<int:post_id>")
+def like(post_id):
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # evitar doble like
+    cur.execute(
+        "SELECT * FROM likes WHERE user_name=%s AND post_id=%s",
+        (session["user"], post_id)
+    )
+
+    if not cur.fetchone():
         cur.execute(
-            "INSERT INTO posts(user_name,content) VALUES(%s,%s)",
-            (session["user"], request.form["content"])
+            "INSERT INTO likes(user_name,post_id) VALUES(%s,%s)",
+            (session["user"], post_id)
         )
 
-        conn.commit()
-        conn.close()
+        cur.execute(
+            "UPDATE posts SET likes = likes + 1 WHERE id=%s",
+            (post_id,)
+        )
 
-        return redirect("/")
+    conn.commit()
+    conn.close()
 
-    except Exception as e:
-        return f"Error post: {e}"
+    return redirect("/")
+
+
+# -------------------------
+# COMENTARIOS 💬
+# -------------------------
+@app.route("/comment/<int:post_id>", methods=["POST"])
+def comment(post_id):
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO comments(post_id,user_name,comment) VALUES(%s,%s,%s)",
+        (post_id, session["user"], request.form["comment"])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
 
 
 # -------------------------
