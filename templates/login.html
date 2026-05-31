@@ -2,124 +2,18 @@
 <html>
 <head>
     <title>Zentri - Login</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 320px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            text-align: center;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 10px;
-        }
-
-        h2 {
-            color: #1e40af;
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-
-        input:focus {
-            outline: none;
-            box-shadow: none;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: #1e40af;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .btn-login:hover {
-            background: #3b82f6;
-        }
-
-        .btn-login:active {
-            transform: scale(0.98);
-        }
-
-        .btn-register {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px;
-            width: 100%;
-            background: #22c55e;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .btn-register:hover {
-            background: #16a34a;
-        }
-
-        .btn-register:active {
-            transform: scale(0.98);
-        }
-
-        button, a {
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        button:focus, a:focus {
-            outline: none;
-            box-shadow: none;
-        }
-    </style>
 </head>
-
 <body>
 
-<div class="card">
+<h2>Zentri Login</h2>
 
-    <div class="logo">Zentri</div>
+<form method="POST">
+    <input name="email" placeholder="Email" required>
+    <input name="password" type="password" placeholder="Password" required>
+    <button type="submit">Entrar</button>
+</form>
 
-    <h2>Iniciar Sesión</h2>
-
-    <form method="POST">
-        <input name="email" placeholder="Email" required>
-        <input name="password" type="password" placeholder="Password" required>
-
-        <button class="btn-login" type="submit">Entrar</button>
-    </form>
-
-    <p>¿No tienes cuenta?</p>
-
-    <a class="btn-register" href="/register">Crear cuenta</a>
-
-</div>
+<a href="/register">Crear cuenta</a>
 
 </body>
 </html>
