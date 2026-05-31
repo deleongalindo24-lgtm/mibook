@@ -1,0 +1,10 @@
+<h2>Usuarios</h2>
+
+{% for u in users %}
+<p>
+    {{ u[0] }}
+    <a href="/chat/{{ u[0] }}">Chat</a>
+</p>
+{% endfor %}
+
+<a href="/">Volver</a>
